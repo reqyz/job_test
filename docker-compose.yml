@@ -13,12 +13,10 @@ services:
       POSTGRES_PASSWORD: secret
   web:
     build: .
-    command: bash -c "pgmigrate -d common -c 'user=postgres password=secret dbname=job_test host=db' -t latest migrate && python main.py"
-    links:
-      - "db:database"
     ports:
       - "8001:8001"
+    command: bash -c "pgmigrate -d common -c 'user=postgres password=secret dbname=job_test host=db' -t latest migrate && python main.py"
     depends_on:
-      - db
+      - "db"
 volumes:
   my_dbdata:

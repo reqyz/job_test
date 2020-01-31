@@ -1,0 +1,22 @@
+version: '3'
+services:
+  db:
+    image: "postgres:11"
+    container_name: "my_postgres"
+    ports:
+      - "54320:5432"
+    volumes:
+      - my_dbdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: job_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+  web:
+    build: .
+    command: bash -c "pgmigrate -d common -c 'user=postgres password=secret dbname=job_test host=db' -t latest migrate && python main.py"
+    links:
+      - "db:database"
+    ports:
+      - "8001:8001"
+volumes:
+  my_dbdata:

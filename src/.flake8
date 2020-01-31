@@ -1,0 +1,6 @@
+[flake8]
+exclude = .cache,.env,env,devops,migrations,__pycache__,local_settings.py,settings.py,playground,venv,.venv
+import-order-style = pycharm
+max-complexity = 10
+max-line-length = 120
+application-import-names = apps,conf,middlewares,services,utils

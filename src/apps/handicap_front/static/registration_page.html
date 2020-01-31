@@ -1,0 +1,46 @@
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Регистрация</title>
+  </head>
+  <body>
+  <label id="error_message"></label>
+  <form id="create_user" action="/users/create/" method="PUT" accept-charset="utf-8">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="text" value="" autofocus/><br><br>
+    <label for="name">Имя</label>
+    <input id="name" name="name" type="text" value="" autofocus/><br><br>
+    <label for="password">Пароль</label>
+    <input id="password" name="password" type="password" value=""/><br><br>
+    <input type="submit" value="Регистрация"/>
+  </form>
+  <input type="submit" value="У меня уже есть аккаунт"
+         onclick="window.location='login/';" />
+  </body>
+  <script>
+        $('#create_user').submit(function (e) {
+          e.preventDefault();
+          let frm = $('#create_user');
+          let email = $("#email").val();
+          let name = $("#name").val();
+          let password = $("#password").val();
+          $.ajax({
+              url: frm.attr('action'),
+              type: frm.attr('method'),
+              data: JSON.stringify({"email": email, "name": name, "password": password}),
+              contentType: 'application/json',
+              success: function (response, status, xhr) {
+                var c_value = xhr.getResponseHeader("token");
+                document.cookie = 'token=' + c_value + "; path=/";
+                window.location = '/user/';
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+        });
+    });
+  </script>
+</html>

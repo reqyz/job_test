@@ -1,0 +1,261 @@
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src='//js.zapjs.com/js/download.js'></script>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Пользователь</title>
+  </head>
+
+  <style>
+  table, th, td {
+    border: 1px solid black;
+  }
+  .table_input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  a {
+    text-decoration: none;
+  }
+
+  </style>
+
+  <body>
+  <label id="error_message"></label>
+  <form id="user_info" action="/users/current/" method="GET" accept-charset="utf-8">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="text" value="" autofocus/><br><br>
+    <label for="name">Имя</label>
+    <input id="name" name="name" type="text" value="" autofocus/><br><br>
+    <label for="password">Пароль</label>
+    <input id="password" name="password" type="password" value=""/><br><br>
+  </form>
+
+  <input type="submit" value="Обновить пользователя"
+         onclick="update_user();" />
+  <br><br>
+  <input type="submit" value="Обновить пароль"
+         onclick="update_user_pass();" />
+  <br><br>
+  <input type="submit" value="Удалить"
+         onclick="delete_user();" />
+
+  <br><br>
+  <hr>
+
+  <br><br>
+  <table id="links_table" style="width:50%">
+    <thead>
+      <tr>
+        <th>Ссылка</th>
+        <th>Обновить</th>
+        <th>Удалить</th>
+      </tr>
+    </thead>
+    <tbody id="link_tbody"></tbody>
+  </table>
+  <br><br>
+  <label id="links_info"></label>
+  <form id="users_links" action="/users/links/" method="GET" accept-charset="utf-8">
+  <label for="link">Ссылка</label>
+  <input id="link" name="link" type="text" value="" autofocus/>
+  </form>
+  <input type="submit" value="Добавить ссылку" onclick="add_link()"/><br><br>
+  <input type="submit" value="Скачать все" onclick="download_all()"/>
+
+  <script>
+    function getCookie(name) {
+      var value = "; " + document.cookie;
+      var parts = value.split("; " + name + "=");
+      if (parts.length == 2) return parts.pop().split(";").shift();
+    };
+
+    var token = '';
+
+    function load_links(){
+      let link_frm = $('#users_links');
+      $('#link_tbody').empty();
+      $.ajax({
+          url: link_frm.attr('action'),
+          type: link_frm.attr('method'),
+          headers: {'Content-Type': 'application/json', 'token': token},
+          success: function (response) {
+            for (let one_link of response.links) {
+              $('#link_tbody').append('<tr><td>' +
+                                      '<input class="table_input" id="link_'+one_link.link_id+'" type="text" value="'+one_link.link+'"/>' +
+                                      '</td><td>' +
+                                      '<a href="#" onclick="update_link('+ one_link.link_id +');">обновить</a>' +
+                                      '</td><td>' +
+                                      '<a  href="#" onclick="delete_link('+ one_link.link_id +');">удалить</a>' +
+                                      '</td></tr>');
+            }
+          },
+          error: function (response) {
+            let errorText = response.responseText;
+            document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+          }
+      });
+    }
+
+    function add_link(){
+      let link = $('#link').val();
+      if (link != "") {
+        $.ajax({
+              url: '/users/links/',
+              type: 'POST',
+              headers: {'Content-Type': 'application/json', 'token': token},
+              data: JSON.stringify({"link": link}),
+              success: function (response) {
+                load_links();
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+          });
+      }
+    }
+
+    function update_link(link_id){
+      let url = '/users/links/' + link_id + '/';
+      $.ajax({
+              url: url,
+              type: 'PUT',
+              headers: {'Content-Type': 'application/json', 'token': token},
+              data: JSON.stringify({"link": $('#link_'+link_id).val()}),
+              success: function (response) {
+                load_links();
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+          });
+    }
+
+    function delete_link(link_id){
+      let url = '/users/links/' + link_id + '/'
+      $.ajax({
+              url: url,
+              type: 'DELETE',
+              headers: {'Content-Type': 'application/json', 'token': token},
+              success: function (response) {
+                load_links();
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+          });
+    }
+
+    window.onload = function() {
+      token = getCookie('token');
+      let frm = $('#user_info');
+      $.ajax({
+              url: frm.attr('action'),
+              type: frm.attr('method'),
+              headers: {'Content-Type': 'application/json', 'token': token},
+              success: function (response) {
+                $("#name").val(response.user.name);
+                $("#email").val(response.user.email);
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+          });
+
+       load_links();
+    };
+
+    function delete_user(){
+      $.ajax({
+              url: '/users/',
+              type: 'DELETE',
+              headers: {'Content-Type': 'application/json', 'token': token},
+              success: function (response, status, xhr) {
+                window.location='/';
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+          });
+    };
+
+    function update_user(){
+      let email = $("#email").val();
+      let name = $("#name").val();
+      $.ajax({
+              url: '/users/update/',
+              type: 'POST',
+              headers: {'Content-Type': 'application/json', 'token': token},
+              data: JSON.stringify({"email": email, "name": name}),
+              success: function (response, status, xhr) {
+                var c_value = xhr.getResponseHeader("token");
+                document.cookie = 'token=' + c_value + "; path=/";
+                document.getElementById('error_message').innerHTML = 'Обновлено' + '<br><br>';
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+          });
+    };
+
+    function update_user_pass(){
+      let new_password = $("#password").val();
+      $.ajax({
+              url: '/users/update/pass/',
+              type: 'PUT',
+              headers: {'Content-Type': 'application/json', 'token': token},
+              data: JSON.stringify({"new_password": new_password}),
+              success: function (response, status, xhr) {
+                var c_value = xhr.getResponseHeader("token");
+                document.cookie = 'token=' + c_value + "; path=/";
+                document.getElementById('error_message').innerHTML = 'Пароль обновлен' + '<br><br>';
+                $("#password").val('');
+              },
+              error: function (response) {
+                let errorText = response.responseText;
+                document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+              }
+          });
+    };
+
+    function download_all(){
+      let link_frm = $('#users_links');
+      $.ajax({
+          url: link_frm.attr('action'),
+          type: link_frm.attr('method'),
+          headers: {'Content-Type': 'application/json', 'token': token},
+          success: function (response, status, xhr) {
+            for (let one_link of response.links) {
+              fetch('/users/links/download/' + one_link.link_id + '/', {
+              headers: {'token': token}
+              })
+              .then(resp => resp.blob())
+              .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'my_file';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+              })
+              .catch(() => alert('oh no!'));
+            }
+          },
+          error: function (response) {
+            let errorText = response.responseText;
+            document.getElementById('error_message').innerHTML = errorText + '<br><br>';
+          }
+      });
+    }
+  </script>
+  </body>
+</html>

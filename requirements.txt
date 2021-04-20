@@ -1,6 +1,6 @@
 aiofiles==0.4.0
 aiohttp==3.6.2
-asyncpg==0.20.1
+asyncpg==0.21.0
 envparse==0.2.0
 flake8==3.7.9
 httptools==0.0.13
